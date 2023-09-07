@@ -1,0 +1,21 @@
+name: "Action SharePoint Copy"
+description: "Creates a zip file of the current repository and copies it to a given SharePoint Online directory."
+author: "John Fabry"
+inputs:
+  spobkp_tenant_id:
+    description: "O365 tenant ID"
+    required: true
+  spobkp_clientid:
+    description: "O365 Graph API client ID"
+    required: true
+  spobkp_secret:
+    description: "O365 Graph API client secret"
+    required: true
+  archive_prefix:
+    description: "Prefix for the archive file"
+    required: true
+    default: "spo_action"
+  runs:
+    using: "node20"
+    main: "index.js"
+

@@ -1,0 +1,8 @@
+{
+    "compilerOptions": {
+        "forceConsistentCasingInFileNames": true,
+        "outDir": "./build",
+        "rootDir": "./source",
+        "strict": true
+    }
+}
