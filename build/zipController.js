@@ -1,10 +1,38 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ZipController = void 0;
-var fs = require("fs");
+var fs = __importStar(require("fs"));
 var errors_1 = require("./errors");
 var logging_1 = require("./logging");
 var zipper = require('zip-local');
+/**
+ * Verifies the given path exists and is a directory.
+ * @param {string} filePath
+ * @returns {boolean}
+ */
 function verifyPath(filePath) {
     try {
         return fs.existsSync(filePath) && fs.statSync(filePath).isDirectory();
@@ -16,29 +44,13 @@ function verifyPath(filePath) {
 function padTwoDigits(num) {
     return num.toString().padStart(2, '0');
 }
-function formatDate(date) {
-    return ([
-        date.getFullYear(),
-        padTwoDigits(date.getMonth() + 1),
-        padTwoDigits(date.getDate()),
-    ].join('_') +
-        '-' +
-        [
-            padTwoDigits(date.getHours()),
-            padTwoDigits(date.getMinutes()),
-            padTwoDigits(date.getSeconds())
-        ].join('_'));
-}
 var ZipController = /** @class */ (function () {
     function ZipController(filePath, zipPath) {
-        this.zipPath = "/tmp/backup_".concat(formatDate(new Date()), ".zip");
         if (!verifyPath(filePath)) {
             throw new errors_1.InvalidDirPath("No directory found at: ".concat(filePath));
         }
         this.mainPath = filePath;
-        if (zipPath) {
-            this.zipPath = zipPath;
-        }
+        this.zipPath = zipPath;
     }
     ZipController.prototype.removeArchive = function (filePath) {
         if (!filePath) {

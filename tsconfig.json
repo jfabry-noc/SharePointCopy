@@ -3,6 +3,7 @@
         "forceConsistentCasingInFileNames": true,
         "outDir": "./build",
         "rootDir": "./source",
+        "esModuleInterop": true,
         "strict": true
     }
 }

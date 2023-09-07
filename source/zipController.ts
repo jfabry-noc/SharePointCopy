@@ -5,6 +5,11 @@ import { logTime, LogLevels } from './logging';
 
 var zipper = require('zip-local');
 
+/**
+ * Verifies the given path exists and is a directory.
+ * @param {string} filePath
+ * @returns {boolean}
+ */
 function verifyPath(filePath: string): boolean {
     try {
         return fs.existsSync(filePath) && fs.statSync(filePath).isDirectory();
@@ -17,35 +22,16 @@ function padTwoDigits(num: number) {
     return num.toString().padStart(2, '0');
 }
 
-function formatDate(date: Date): string {
-    return (
-        [
-            date.getFullYear(),
-            padTwoDigits(date.getMonth() + 1),
-            padTwoDigits(date.getDate()),
-        ].join('_') +
-        '-' +
-        [
-            padTwoDigits(date.getHours()),
-            padTwoDigits(date.getMinutes()),
-            padTwoDigits(date.getSeconds())
-        ].join('_')
-    );
-}
-
-
 export class ZipController {
     mainPath: string;
-    zipPath: string = `/tmp/backup_${formatDate(new Date())}.zip`;
+    zipPath: string;
 
-    constructor(filePath: string, zipPath?: string) {
+    constructor(filePath: string, zipPath: string) {
         if(!verifyPath(filePath)) {
             throw new InvalidDirPath(`No directory found at: ${filePath}`);
         }
         this.mainPath = filePath;
-        if(zipPath) {
-            this.zipPath = zipPath;
-        }
+        this.zipPath = zipPath;
     }
 
     removeArchive(filePath?: string) {

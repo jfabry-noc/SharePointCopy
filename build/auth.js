@@ -59,94 +59,74 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-require('dotenv').config();
+exports.getToken = exports.apiConfig = exports.tokenRequest = void 0;
+// https://learn.microsoft.com/en-us/azure/active-directory/develop/tutorial-v2-nodejs-console
 var errors_1 = require("./errors");
-var logging_1 = require("./logging");
-var zipController_1 = require("./zipController");
-var auth = __importStar(require("./auth"));
-/**
- * Validates the required environment variables are found.
- */
-function validateEnv() {
-    var requiredVars = [
-        'TENANT_ID',
-        'CLIENT_ID',
-        'CLIENT_SECRET',
-        'AAD_ENDPOINT',
-        'GRAPH_ENDPOINT',
-        'SPO_PATH',
-    ];
-    (0, logging_1.logTime)("Verifying the following environment variables: ".concat(requiredVars.join(",")), logging_1.LogLevels.INFO);
-    requiredVars.forEach(function (element) {
-        if (!process.env[element]) {
-            throw new errors_1.MissingVariable("Missing ".concat(element, " as an environment variable!"));
-        }
-    });
+var msal = __importStar(require("@azure/msal-node"));
+var clientId = '';
+var aadEndpoint = '';
+var tenantId = '';
+var clientSecret = '';
+var graphEndpoint = '';
+var spoPath = '';
+function throwMissingVar(varName) {
+    throw new errors_1.MissingVariable("Missing environment variable for: ".concat(varName));
 }
-/**
- * Pads a given number to 2 digits with 0's.
- * @param {number} num
- * @returns {string}
- */
-function padTwoDigits(num) {
-    return num.toString().padStart(2, '0');
+if (process.env.CLIENT_ID) {
+    clientId = process.env.CLIENT_ID;
 }
-/**
- * Gets the name of the solution being backed up from the environment variable
- * or uses a default one if no corresponding environment variable is found.
- * @returns {string}
- */
-function getSolutionName() {
-    var nameBase = process.env.BASE_NAME;
-    if (!nameBase) {
-        nameBase = "sharepoint_action";
+else {
+    throwMissingVar('CLIENT_ID');
+}
+if (process.env.AAD_ENDPOINT) {
+    aadEndpoint = process.env.AAD_ENDPOINT;
+}
+else {
+    throwMissingVar('AAD_ENDPOINT');
+}
+if (process.env.TENANT_ID) {
+    tenantId = process.env.TENANT_ID;
+}
+else {
+    throwMissingVar('TENANT_ID');
+}
+if (process.env.CLIENT_SECRET) {
+    clientSecret = process.env.CLIENT_SECRET;
+}
+else {
+    throwMissingVar('CLIENT_SECRET');
+}
+if (process.env.GRAPH_ENDPOINT) {
+    graphEndpoint = process.env.GRAPH_ENDPOINT;
+}
+else {
+    throwMissingVar('GRAPH_ENDPOINT');
+}
+if (process.env.SPO_PATH) {
+    spoPath = process.env.SPO_PATH;
+}
+else {
+    throwMissingVar('SPO_PATH');
+}
+var msalConfig = {
+    auth: {
+        clientId: clientId,
+        authority: aadEndpoint + '/' + tenantId,
+        clientSecret: clientSecret,
     }
-    return nameBase;
-}
-/**
- * Formats a Date object into a filename format.
- * @param {Date} date
- * @returns {string}
- */
-function formatDate(date) {
-    return ([
-        date.getFullYear(),
-        padTwoDigits(date.getMonth() + 1),
-        padTwoDigits(date.getDate()),
-    ].join('_') +
-        '-' +
-        [
-            padTwoDigits(date.getHours()),
-            padTwoDigits(date.getMinutes()),
-            padTwoDigits(date.getSeconds())
-        ].join('_'));
-}
-/**
- * Main entrypoint into the solution.
- */
-function main() {
+};
+exports.tokenRequest = {
+    scopes: [graphEndpoint + '/.default'],
+};
+exports.apiConfig = {
+    uri: '' + graphEndpoint + spoPath,
+};
+var cca = new msal.ConfidentialClientApplication(msalConfig);
+function getToken(tokenRequest) {
     return __awaiter(this, void 0, void 0, function () {
-        var directoryPath, zipPath, zippy, authResponse;
         return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    (0, logging_1.logTime)('Beginning a new run.', logging_1.LogLevels.INFO);
-                    directoryPath = '/private/tmp/testing';
-                    zipPath = "/private/tmp/".concat(getSolutionName(), "_").concat(formatDate(new Date()), ".zip");
-                    validateEnv();
-                    zippy = new zipController_1.ZipController(directoryPath, zipPath);
-                    zippy.createZip();
-                    return [4 /*yield*/, auth.getToken(auth.tokenRequest)];
-                case 1:
-                    authResponse = _a.sent();
-                    if (!authResponse) {
-                        (0, logging_1.logTime)('Failed to receive any auth response.', logging_1.LogLevels.ERROR);
-                        return [2 /*return*/];
-                    }
-                    (0, logging_1.logTime)("Received authentication token: ".concat(authResponse.accessToken), logging_1.LogLevels.DEBUG);
-                    return [2 /*return*/];
-            }
+            return [2 /*return*/, cca.acquireTokenByClientCredential(tokenRequest)];
         });
     });
 }
-main();
+exports.getToken = getToken;
