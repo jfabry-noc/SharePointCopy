@@ -1,10 +1,12 @@
 require('dotenv').config();
 
-import { MissingVariable } from './errors';
+import { MissingResponseValue, MissingVariable } from './errors';
+import { getSpoContent, postSpoContent } from './graph';
 import { logTime, LogLevels } from './logging';
 import { ZipController } from './zipController';
 
 import * as auth from './auth';
+import {isTypeOnlyImportOrExportDeclaration} from 'typescript';
 
 /**
  * Validates the required environment variables are found.
@@ -75,16 +77,32 @@ function formatDate(date: Date): string {
 }
 
 /**
+ * Ensures an expected value was receive from the API response.
+ * @param {string} valueName
+ * @param {string?} value
+ */
+function validateRespValue(valueName: string, value?: string) {
+    if(!value) {
+        throw new MissingResponseValue(
+            `No ${valueName} was received from the API response.`
+        );
+    }
+}
+
+/**
  * Main entrypoint into the solution.
  */
 async function main() {
     logTime('Beginning a new run.', LogLevels.INFO);
     const directoryPath: string = '/private/tmp/testing';
     const zipPath: string = `/private/tmp/${getSolutionName()}_${formatDate(new Date())}.zip`;
+    const zipArr: string[] = zipPath.split('/');
+    const zipName: string = zipArr[zipArr.length -1];
     validateEnv();
     const zippy: ZipController = new ZipController(directoryPath, zipPath);
     zippy.createZip();
 
+    logTime('Attempting to get an access token from AAD.', LogLevels.INFO);
     const authResponse = await auth.getToken(auth.tokenRequest);
     if(!authResponse) {
         logTime(
@@ -93,8 +111,47 @@ async function main() {
         return;
     }
     logTime(
-        `Received authentication token: ${authResponse.accessToken}`, LogLevels.DEBUG
+        `Received authentication token: ${authResponse.accessToken}`,
+        LogLevels.INFO
     );
+    validateRespValue('access token', authResponse.accessToken);
+
+    logTime(
+        `Trying to get the directory ID from: ${auth.apiConfig.uriDir}`,
+        LogLevels.INFO
+    );
+    const dirIdResp = await getSpoContent(auth.apiConfig.uriDir, authResponse.accessToken);
+    const dirId: string|undefined = dirIdResp.id;
+    validateRespValue('directory id', dirId);
+    logTime(`Found directory ID value: ${dirId}`, LogLevels.DEBUG);
+
+
+    const uploadReqUri: string = auth.apiConfig.uriuploadBase +
+                                '/items/' +
+                                dirId +
+                                ':/' +
+                                zipName +
+                                ':/createUploadSession';
+    logTime(`Requesting an upload session from: ${uploadReqUri}`, LogLevels.DEBUG);
+    const uploadPayload = {
+        '@microsoft.graph.conflictBehavior': 'replace',
+        description: 'GitHub repository archive.',
+        fileSystemInfo: {'odata.type': 'microsoft.graph.fileSystemInfo'},
+        name: zipName,
+    };
+    const uploadUriResp = await postSpoContent(uploadReqUri, authResponse.accessToken, uploadPayload);
+    const uploadUri: string|undefined = uploadUriResp.uploadUrl;
+    validateRespValue('upload URI', uploadUri);
+
+    logTime(
+        `Getting content in directory from: ${auth.apiConfig.uriChildren}`,
+        LogLevels.INFO
+    );
+    const content = await getSpoContent(auth.apiConfig.uriChildren, authResponse.accessToken);
+    logTime(`Found ${content.value.length} items.`, LogLevels.DEBUG);
+    for(const item of content.value) {
+        logTime(`Response item: ${item.name}`, LogLevels.DEBUG);
+    }
 
     zippy.removeArchive(zipPath);
 }

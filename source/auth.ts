@@ -55,7 +55,9 @@ export const tokenRequest = {
     scopes: [graphEndpoint + '/.default'],
 };
 export const apiConfig = {
-    uri: '' + graphEndpoint + spoPath,
+    uriDir: '' + graphEndpoint + spoPath,
+    uriChildren: '' + graphEndpoint + spoPath + ':/children/',
+    uriuploadBase: '' + graphEndpoint + spoPath.split('/root:')[0],
 }
 const cca = new msal.ConfidentialClientApplication(msalConfig);
 

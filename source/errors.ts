@@ -11,3 +11,10 @@ export class MissingVariable extends Error {
         this.name = 'MissingVariable';
     }
 }
+
+export class MissingResponseValue extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'MissingAccessToken';
+    }
+}

@@ -61,6 +61,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 require('dotenv').config();
 var errors_1 = require("./errors");
+var graph_1 = require("./graph");
 var logging_1 = require("./logging");
 var zipController_1 = require("./zipController");
 var auth = __importStar(require("./auth"));
@@ -122,28 +123,75 @@ function formatDate(date) {
         ].join('_'));
 }
 /**
+ * Ensures an expected value was receive from the API response.
+ * @param {string} valueName
+ * @param {string?} value
+ */
+function validateRespValue(valueName, value) {
+    if (!value) {
+        throw new errors_1.MissingResponseValue("No ".concat(valueName, " was received from the API response."));
+    }
+}
+/**
  * Main entrypoint into the solution.
  */
 function main() {
     return __awaiter(this, void 0, void 0, function () {
-        var directoryPath, zipPath, zippy, authResponse;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var directoryPath, zipPath, zipArr, zipName, zippy, authResponse, dirIdResp, dirId, uploadReqUri, uploadPayload, uploadUriResp, content, _i, _a, item;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
                 case 0:
                     (0, logging_1.logTime)('Beginning a new run.', logging_1.LogLevels.INFO);
                     directoryPath = '/private/tmp/testing';
                     zipPath = "/private/tmp/".concat(getSolutionName(), "_").concat(formatDate(new Date()), ".zip");
+                    zipArr = zipPath.split('/');
+                    zipName = zipArr[zipArr.length - 1];
                     validateEnv();
                     zippy = new zipController_1.ZipController(directoryPath, zipPath);
                     zippy.createZip();
+                    (0, logging_1.logTime)('Attempting to get an access token from AAD.', logging_1.LogLevels.INFO);
                     return [4 /*yield*/, auth.getToken(auth.tokenRequest)];
                 case 1:
-                    authResponse = _a.sent();
+                    authResponse = _b.sent();
                     if (!authResponse) {
                         (0, logging_1.logTime)('Failed to receive any auth response.', logging_1.LogLevels.ERROR);
                         return [2 /*return*/];
                     }
-                    (0, logging_1.logTime)("Received authentication token: ".concat(authResponse.accessToken), logging_1.LogLevels.DEBUG);
+                    (0, logging_1.logTime)("Received authentication token: ".concat(authResponse.accessToken), logging_1.LogLevels.INFO);
+                    validateRespValue('access token', authResponse.accessToken);
+                    (0, logging_1.logTime)("Trying to get the directory ID from: ".concat(auth.apiConfig.uriDir), logging_1.LogLevels.INFO);
+                    return [4 /*yield*/, (0, graph_1.getSpoContent)(auth.apiConfig.uriDir, authResponse.accessToken)];
+                case 2:
+                    dirIdResp = _b.sent();
+                    dirId = dirIdResp.id;
+                    validateRespValue('directory id', dirId);
+                    (0, logging_1.logTime)("Found directory ID value: ".concat(dirId), logging_1.LogLevels.DEBUG);
+                    uploadReqUri = auth.apiConfig.uriuploadBase +
+                        '/items/' +
+                        dirId +
+                        ':/' +
+                        zipName +
+                        ':/createUploadSession';
+                    (0, logging_1.logTime)("Requesting an upload session from: ".concat(uploadReqUri), logging_1.LogLevels.DEBUG);
+                    uploadPayload = {
+                        '@microsoft.graph.conflictBehavior': 'replace',
+                        description: 'GitHub repository archive.',
+                        fileSystemInfo: { 'odata.type': 'microsoft.graph.fileSystemInfo' },
+                        name: zipName,
+                    };
+                    return [4 /*yield*/, (0, graph_1.postSpoContent)(uploadReqUri, authResponse.accessToken, uploadPayload)];
+                case 3:
+                    uploadUriResp = _b.sent();
+                    (0, logging_1.logTime)("Getting content in directory from: ".concat(auth.apiConfig.uriChildren), logging_1.LogLevels.INFO);
+                    return [4 /*yield*/, (0, graph_1.getSpoContent)(auth.apiConfig.uriChildren, authResponse.accessToken)];
+                case 4:
+                    content = _b.sent();
+                    (0, logging_1.logTime)("Found ".concat(content.value.length, " items."), logging_1.LogLevels.DEBUG);
+                    for (_i = 0, _a = content.value; _i < _a.length; _i++) {
+                        item = _a[_i];
+                        (0, logging_1.logTime)("Response item: ".concat(item.name), logging_1.LogLevels.DEBUG);
+                    }
+                    zippy.removeArchive(zipPath);
                     return [2 /*return*/];
             }
         });

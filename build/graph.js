@@ -39,7 +39,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getSpoContent = void 0;
+exports.postSpoContent = exports.getSpoContent = void 0;
 var axios_1 = __importDefault(require("axios"));
 var logging_1 = require("./logging");
 /**
@@ -54,8 +54,7 @@ function getSpoContent(endpoint, accessToken) {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    (0, logging_1.logTime)("Accessing '".concat(endpoint, "'"), logging_1.LogLevels.INFO);
-                    (0, logging_1.logTime)("Using access token: ".concat(accessToken, "."), logging_1.LogLevels.DEBUG);
+                    (0, logging_1.logTime)("Making a GET to: ".concat(endpoint), logging_1.LogLevels.INFO);
                     options = {
                         headers: {
                             Authorization: "Bearer ".concat(accessToken)
@@ -78,3 +77,34 @@ function getSpoContent(endpoint, accessToken) {
     });
 }
 exports.getSpoContent = getSpoContent;
+function postSpoContent(endpoint, accessToken, body) {
+    return __awaiter(this, void 0, void 0, function () {
+        var options, response, error_2;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    (0, logging_1.logTime)("Making a POST to: ".concat(endpoint), logging_1.LogLevels.INFO);
+                    (0, logging_1.logTime)("Using Body: ".concat(body), logging_1.LogLevels.DEBUG);
+                    options = {
+                        headers: {
+                            Authorization: "Bearer ".concat(accessToken),
+                            'Content-Type': 'application/json',
+                        }
+                    };
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 3, , 4]);
+                    return [4 /*yield*/, axios_1.default.post(endpoint, body, options)];
+                case 2:
+                    response = _a.sent();
+                    return [2 /*return*/, response.data];
+                case 3:
+                    error_2 = _a.sent();
+                    (0, logging_1.logTime)("Failed to POST to endpoint with error: ".concat(error_2), logging_1.LogLevels.ERROR);
+                    return [3 /*break*/, 4];
+                case 4: return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.postSpoContent = postSpoContent;
