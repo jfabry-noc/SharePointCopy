@@ -18,3 +18,10 @@ export class MissingResponseValue extends Error {
         this.name = 'MissingAccessToken';
     }
 }
+
+export class BufferFailure extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'BufferFailure';
+    }
+}

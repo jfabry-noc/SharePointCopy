@@ -133,11 +133,21 @@ function validateRespValue(valueName, value) {
     }
 }
 /**
+ * Validates that a file buffer was successfully retrieved.
+ * @param {Buffer?} buffer
+ */
+function validateBuffer(buffer) {
+    if (!buffer) {
+        throw new errors_1.BufferFailure('Quitting due to failure to read file.');
+    }
+    (0, logging_1.logTime)('Verified file buffer was successfully opened.', logging_1.LogLevels.DEBUG);
+}
+/**
  * Main entrypoint into the solution.
  */
 function main() {
     return __awaiter(this, void 0, void 0, function () {
-        var directoryPath, zipPath, zipArr, zipName, zippy, authResponse, dirIdResp, dirId, uploadReqUri, uploadPayload, uploadUriResp, content, _i, _a, item;
+        var directoryPath, zipPath, zipArr, zipName, zippy, authResponse, dirIdResp, dirId, uploadReqUri, uploadPayload, uploadUriResp, uploadUri, fileBuffer, content, _i, _a, item;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -182,6 +192,10 @@ function main() {
                     return [4 /*yield*/, (0, graph_1.postSpoContent)(uploadReqUri, authResponse.accessToken, uploadPayload)];
                 case 3:
                     uploadUriResp = _b.sent();
+                    uploadUri = uploadUriResp.uploadUrl;
+                    validateRespValue('upload URI', uploadUri);
+                    fileBuffer = zippy.getBuffer(zipPath);
+                    validateBuffer(fileBuffer);
                     (0, logging_1.logTime)("Getting content in directory from: ".concat(auth.apiConfig.uriChildren), logging_1.LogLevels.INFO);
                     return [4 /*yield*/, (0, graph_1.getSpoContent)(auth.apiConfig.uriChildren, authResponse.accessToken)];
                 case 4:

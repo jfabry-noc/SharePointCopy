@@ -1,12 +1,11 @@
 require('dotenv').config();
 
-import { MissingResponseValue, MissingVariable } from './errors';
+import { BufferFailure, MissingResponseValue, MissingVariable } from './errors';
 import { getSpoContent, postSpoContent } from './graph';
 import { logTime, LogLevels } from './logging';
 import { ZipController } from './zipController';
 
 import * as auth from './auth';
-import {isTypeOnlyImportOrExportDeclaration} from 'typescript';
 
 /**
  * Validates the required environment variables are found.
@@ -90,6 +89,17 @@ function validateRespValue(valueName: string, value?: string) {
 }
 
 /**
+ * Validates that a file buffer was successfully retrieved.
+ * @param {Buffer?} buffer
+ */
+function validateBuffer(buffer: Buffer | null) {
+    if(!buffer) {
+        throw new BufferFailure('Quitting due to failure to read file.');
+    }
+    logTime('Verified file buffer was successfully opened.', LogLevels.DEBUG);
+}
+
+/**
  * Main entrypoint into the solution.
  */
 async function main() {
@@ -142,6 +152,9 @@ async function main() {
     const uploadUriResp = await postSpoContent(uploadReqUri, authResponse.accessToken, uploadPayload);
     const uploadUri: string|undefined = uploadUriResp.uploadUrl;
     validateRespValue('upload URI', uploadUri);
+
+    const fileBuffer = zippy.getBuffer(zipPath);
+    validateBuffer(fileBuffer);
 
     logTime(
         `Getting content in directory from: ${auth.apiConfig.uriChildren}`,

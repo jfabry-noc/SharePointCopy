@@ -15,7 +15,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MissingResponseValue = exports.MissingVariable = exports.InvalidDirPath = void 0;
+exports.BufferFailure = exports.MissingResponseValue = exports.MissingVariable = exports.InvalidDirPath = void 0;
 var InvalidDirPath = /** @class */ (function (_super) {
     __extends(InvalidDirPath, _super);
     function InvalidDirPath(message) {
@@ -46,3 +46,13 @@ var MissingResponseValue = /** @class */ (function (_super) {
     return MissingResponseValue;
 }(Error));
 exports.MissingResponseValue = MissingResponseValue;
+var BufferFailure = /** @class */ (function (_super) {
+    __extends(BufferFailure, _super);
+    function BufferFailure(message) {
+        var _this = _super.call(this, message) || this;
+        _this.name = 'BufferFailure';
+        return _this;
+    }
+    return BufferFailure;
+}(Error));
+exports.BufferFailure = BufferFailure;

@@ -41,9 +41,6 @@ function verifyPath(filePath) {
         return false;
     }
 }
-function padTwoDigits(num) {
-    return num.toString().padStart(2, '0');
-}
 var ZipController = /** @class */ (function () {
     function ZipController(filePath, zipPath) {
         if (!verifyPath(filePath)) {
@@ -79,6 +76,10 @@ var ZipController = /** @class */ (function () {
         }
         (0, logging_1.logTime)("Creating zip file of '".concat(dirPath, "' written to '").concat(outputPath, "'"), logging_1.LogLevels.INFO);
         zipper.sync.zip(dirPath).compress().save(outputPath);
+    };
+    ZipController.prototype.getBuffer = function (filePath) {
+        (0, logging_1.logTime)("Reading file at: ".concat(filePath), logging_1.LogLevels.INFO);
+        return fs.readFileSync(filePath);
     };
     return ZipController;
 }());

@@ -18,10 +18,6 @@ function verifyPath(filePath: string): boolean {
     }
 }
 
-function padTwoDigits(num: number) {
-    return num.toString().padStart(2, '0');
-}
-
 export class ZipController {
     mainPath: string;
     zipPath: string;
@@ -73,5 +69,10 @@ export class ZipController {
             LogLevels.INFO
         );
         zipper.sync.zip(dirPath).compress().save(outputPath);
+    }
+
+    getBuffer(filePath: string): Buffer | null {
+        logTime(`Reading file at: ${filePath}`, LogLevels.INFO);
+        return fs.readFileSync(filePath);
     }
 }
