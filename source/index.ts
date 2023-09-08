@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 import { BufferFailure, MissingResponseValue, MissingVariable } from './errors';
-import { getSpoContent, postSpoContent } from './graph';
+import { getSpoContent, postSpoContent, uploadSpoContent } from './graph';
 import { logTime, LogLevels } from './logging';
 import { ZipController } from './zipController';
 
@@ -89,17 +89,6 @@ function validateRespValue(valueName: string, value?: string) {
 }
 
 /**
- * Validates that a file buffer was successfully retrieved.
- * @param {Buffer?} buffer
- */
-function validateBuffer(buffer: Buffer | null) {
-    if(!buffer) {
-        throw new BufferFailure('Quitting due to failure to read file.');
-    }
-    logTime('Verified file buffer was successfully opened.', LogLevels.DEBUG);
-}
-
-/**
  * Main entrypoint into the solution.
  */
 async function main() {
@@ -148,13 +137,19 @@ async function main() {
         description: 'GitHub repository archive.',
         fileSystemInfo: {'odata.type': 'microsoft.graph.fileSystemInfo'},
         name: zipName,
+        //deferCommit: true,
     };
     const uploadUriResp = await postSpoContent(uploadReqUri, authResponse.accessToken, uploadPayload);
     const uploadUri: string|undefined = uploadUriResp.uploadUrl;
-    validateRespValue('upload URI', uploadUri);
+    if(!uploadUri) {
+        throw new MissingResponseValue('Failed to retrieve response for upload URI.');
+    }
 
     const fileBuffer = zippy.getBuffer(zipPath);
-    validateBuffer(fileBuffer);
+    if(!fileBuffer) {
+        throw new BufferFailure('Failed to successfully open a file buffer.');
+    }
+    await uploadSpoContent(uploadUri, authResponse.accessToken, fileBuffer);
 
     logTime(
         `Getting content in directory from: ${auth.apiConfig.uriChildren}`,

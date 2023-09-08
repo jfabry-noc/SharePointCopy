@@ -25,3 +25,10 @@ export class BufferFailure extends Error {
         this.name = 'BufferFailure';
     }
 }
+
+export class BufferConversionFailure extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'BufferConversionFailure';
+    }
+}

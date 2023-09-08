@@ -133,16 +133,6 @@ function validateRespValue(valueName, value) {
     }
 }
 /**
- * Validates that a file buffer was successfully retrieved.
- * @param {Buffer?} buffer
- */
-function validateBuffer(buffer) {
-    if (!buffer) {
-        throw new errors_1.BufferFailure('Quitting due to failure to read file.');
-    }
-    (0, logging_1.logTime)('Verified file buffer was successfully opened.', logging_1.LogLevels.DEBUG);
-}
-/**
  * Main entrypoint into the solution.
  */
 function main() {
@@ -188,17 +178,25 @@ function main() {
                         description: 'GitHub repository archive.',
                         fileSystemInfo: { 'odata.type': 'microsoft.graph.fileSystemInfo' },
                         name: zipName,
+                        //deferCommit: true,
                     };
                     return [4 /*yield*/, (0, graph_1.postSpoContent)(uploadReqUri, authResponse.accessToken, uploadPayload)];
                 case 3:
                     uploadUriResp = _b.sent();
                     uploadUri = uploadUriResp.uploadUrl;
-                    validateRespValue('upload URI', uploadUri);
+                    if (!uploadUri) {
+                        throw new errors_1.MissingResponseValue('Failed to retrieve response for upload URI.');
+                    }
                     fileBuffer = zippy.getBuffer(zipPath);
-                    validateBuffer(fileBuffer);
+                    if (!fileBuffer) {
+                        throw new errors_1.BufferFailure('Failed to successfully open a file buffer.');
+                    }
+                    return [4 /*yield*/, (0, graph_1.uploadSpoContent)(uploadUri, authResponse.accessToken, fileBuffer)];
+                case 4:
+                    _b.sent();
                     (0, logging_1.logTime)("Getting content in directory from: ".concat(auth.apiConfig.uriChildren), logging_1.LogLevels.INFO);
                     return [4 /*yield*/, (0, graph_1.getSpoContent)(auth.apiConfig.uriChildren, authResponse.accessToken)];
-                case 4:
+                case 5:
                     content = _b.sent();
                     (0, logging_1.logTime)("Found ".concat(content.value.length, " items."), logging_1.LogLevels.DEBUG);
                     for (_i = 0, _a = content.value; _i < _a.length; _i++) {

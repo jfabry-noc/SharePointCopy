@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -35,12 +58,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.postSpoContent = exports.getSpoContent = void 0;
-var axios_1 = __importDefault(require("axios"));
+exports.uploadSpoContent = exports.postSpoContent = exports.getSpoContent = void 0;
+var axios_1 = __importStar(require("axios"));
 var logging_1 = require("./logging");
 /**
  * Gets content from a SharePoint Online directory.
@@ -84,7 +104,6 @@ function postSpoContent(endpoint, accessToken, body) {
             switch (_a.label) {
                 case 0:
                     (0, logging_1.logTime)("Making a POST to: ".concat(endpoint), logging_1.LogLevels.INFO);
-                    (0, logging_1.logTime)("Using Body: ".concat(body), logging_1.LogLevels.DEBUG);
                     options = {
                         headers: {
                             Authorization: "Bearer ".concat(accessToken),
@@ -108,3 +127,45 @@ function postSpoContent(endpoint, accessToken, body) {
     });
 }
 exports.postSpoContent = postSpoContent;
+function uploadSpoContent(endpoint, accessToken, data) {
+    return __awaiter(this, void 0, void 0, function () {
+        var options, error_3;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    (0, logging_1.logTime)("Making POST to: ".concat(endpoint), logging_1.LogLevels.INFO);
+                    (0, logging_1.logTime)("Content length is: ".concat(data.length), logging_1.LogLevels.INFO);
+                    (0, logging_1.logTime)("Using content range: bytes 0-".concat(data.length - 1, "/").concat(data.length));
+                    options = {
+                        maxBodyLength: Infinity,
+                        maxContentLength: Infinity,
+                        headers: {
+                            Authorization: "Bearer ".concat(accessToken),
+                            'Content-Type': 'application/json;odata=verbose',
+                            'Content-Length': data.length,
+                            'Content-Range': "bytes 0-".concat(data.length - 1, "/").concat(data.length),
+                            Accept: 'application/json',
+                        }
+                    };
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 3, , 4]);
+                    return [4 /*yield*/, axios_1.default.put(endpoint, data, options)];
+                case 2:
+                    _a.sent();
+                    return [3 /*break*/, 4];
+                case 3:
+                    error_3 = _a.sent();
+                    if (error_3 instanceof axios_1.AxiosError) {
+                        (0, logging_1.logTime)("Failed to upload the file with error: ".concat(error_3.code, " - ").concat(error_3.message), logging_1.LogLevels.ERROR);
+                    }
+                    else {
+                        (0, logging_1.logTime)("Failed to upload the file with error: ".concat(error_3), logging_1.LogLevels.ERROR);
+                    }
+                    return [3 /*break*/, 4];
+                case 4: return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.uploadSpoContent = uploadSpoContent;
