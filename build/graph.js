@@ -59,7 +59,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.uploadSpoContent = exports.postSpoContent = exports.getSpoContent = void 0;
+exports.deleteSpoContent = exports.uploadSpoContent = exports.postSpoContent = exports.getSpoContent = void 0;
 var axios_1 = __importStar(require("axios"));
 var logging_1 = require("./logging");
 /**
@@ -99,7 +99,7 @@ function getSpoContent(endpoint, accessToken) {
 exports.getSpoContent = getSpoContent;
 function postSpoContent(endpoint, accessToken, body) {
     return __awaiter(this, void 0, void 0, function () {
-        var options, response, error_2;
+        var options, response;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -110,18 +110,10 @@ function postSpoContent(endpoint, accessToken, body) {
                             'Content-Type': 'application/json',
                         }
                     };
-                    _a.label = 1;
-                case 1:
-                    _a.trys.push([1, 3, , 4]);
                     return [4 /*yield*/, axios_1.default.post(endpoint, body, options)];
-                case 2:
+                case 1:
                     response = _a.sent();
                     return [2 /*return*/, response.data];
-                case 3:
-                    error_2 = _a.sent();
-                    (0, logging_1.logTime)("Failed to POST to endpoint with error: ".concat(error_2), logging_1.LogLevels.ERROR);
-                    return [3 /*break*/, 4];
-                case 4: return [2 /*return*/];
             }
         });
     });
@@ -129,13 +121,13 @@ function postSpoContent(endpoint, accessToken, body) {
 exports.postSpoContent = postSpoContent;
 function uploadSpoContent(endpoint, accessToken, data) {
     return __awaiter(this, void 0, void 0, function () {
-        var options, error_3;
+        var options;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     (0, logging_1.logTime)("Making POST to: ".concat(endpoint), logging_1.LogLevels.INFO);
-                    (0, logging_1.logTime)("Content length is: ".concat(data.length), logging_1.LogLevels.INFO);
-                    (0, logging_1.logTime)("Using content range: bytes 0-".concat(data.length - 1, "/").concat(data.length));
+                    (0, logging_1.logTime)("Content length is: ".concat(data.length), logging_1.LogLevels.DEBUG);
+                    (0, logging_1.logTime)("Using content range: bytes 0-".concat(data.length - 1, "/").concat(data.length), logging_1.LogLevels.DEBUG);
                     options = {
                         maxBodyLength: Infinity,
                         maxContentLength: Infinity,
@@ -147,20 +139,42 @@ function uploadSpoContent(endpoint, accessToken, data) {
                             Accept: 'application/json',
                         }
                     };
+                    return [4 /*yield*/, axios_1.default.put(endpoint, data, options)];
+                case 1:
+                    _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.uploadSpoContent = uploadSpoContent;
+function deleteSpoContent(endpoint, accessToken) {
+    return __awaiter(this, void 0, void 0, function () {
+        var options, error_2;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    (0, logging_1.logTime)("Making DELETE to: ".concat(endpoint), logging_1.LogLevels.INFO);
+                    options = {
+                        headers: {
+                            Authorization: "Bearer ".concat(accessToken),
+                            'Content-Type': 'application/json',
+                        }
+                    };
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 3, , 4]);
-                    return [4 /*yield*/, axios_1.default.put(endpoint, data, options)];
+                    return [4 /*yield*/, axios_1.default.delete(endpoint, options)];
                 case 2:
                     _a.sent();
                     return [3 /*break*/, 4];
                 case 3:
-                    error_3 = _a.sent();
-                    if (error_3 instanceof axios_1.AxiosError) {
-                        (0, logging_1.logTime)("Failed to upload the file with error: ".concat(error_3.code, " - ").concat(error_3.message), logging_1.LogLevels.ERROR);
+                    error_2 = _a.sent();
+                    if (error_2 instanceof axios_1.AxiosError) {
+                        (0, logging_1.logTime)("Received error: ".concat(error_2.code, " - ").concat(error_2.message), logging_1.LogLevels.ERROR);
                     }
                     else {
-                        (0, logging_1.logTime)("Failed to upload the file with error: ".concat(error_3), logging_1.LogLevels.ERROR);
+                        (0, logging_1.logTime)("Received error: ".concat(error_2), logging_1.LogLevels.ERROR);
                     }
                     return [3 /*break*/, 4];
                 case 4: return [2 /*return*/];
@@ -168,4 +182,4 @@ function uploadSpoContent(endpoint, accessToken, data) {
         });
     });
 }
-exports.uploadSpoContent = uploadSpoContent;
+exports.deleteSpoContent = deleteSpoContent;

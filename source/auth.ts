@@ -57,11 +57,10 @@ export const tokenRequest = {
 export const apiConfig = {
     uriDir: '' + graphEndpoint + spoPath,
     uriChildren: '' + graphEndpoint + spoPath + ':/children/',
-    uriuploadBase: '' + graphEndpoint + spoPath.split('/root:')[0],
+    uriBase: '' + graphEndpoint + spoPath.split('/root:')[0],
 }
 const cca = new msal.ConfidentialClientApplication(msalConfig);
 
 export async function getToken(tokenRequest: object) {
     return cca.acquireTokenByClientCredential(tokenRequest);
 }
-

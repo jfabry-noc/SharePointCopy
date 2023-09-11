@@ -121,7 +121,7 @@ exports.tokenRequest = {
 exports.apiConfig = {
     uriDir: '' + graphEndpoint + spoPath,
     uriChildren: '' + graphEndpoint + spoPath + ':/children/',
-    uriuploadBase: '' + graphEndpoint + spoPath.split('/root:')[0],
+    uriBase: '' + graphEndpoint + spoPath.split('/root:')[0],
 };
 var cca = new msal.ConfidentialClientApplication(msalConfig);
 function getToken(tokenRequest) {

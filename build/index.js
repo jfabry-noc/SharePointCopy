@@ -65,6 +65,7 @@ var graph_1 = require("./graph");
 var logging_1 = require("./logging");
 var zipController_1 = require("./zipController");
 var auth = __importStar(require("./auth"));
+var defaultArchiveCount = 4;
 /**
  * Validates the required environment variables are found.
  */
@@ -133,26 +134,61 @@ function validateRespValue(valueName, value) {
     }
 }
 /**
+ * Determines the number of archives to keep. Defaults to 4.
+ * @returns {number}
+ */
+function getNumArchives() {
+    var archiveEnv = process.env.ARCHIVE_COUNT;
+    if (!archiveEnv) {
+        (0, logging_1.logTime)("No archive count set. Using the default archive count of: ".concat(defaultArchiveCount), logging_1.LogLevels.INFO);
+        return defaultArchiveCount;
+    }
+    var archiveNum = parseInt(archiveEnv, 10);
+    if (!archiveNum || isNaN(archiveNum)) {
+        (0, logging_1.logTime)("Invalid archive count specified: ".concat(archiveEnv, ". Using the default archive count of: ").concat(defaultArchiveCount), logging_1.LogLevels.WARNING);
+        return defaultArchiveCount;
+    }
+    (0, logging_1.logTime)("Using correctly specified archive count: ".concat(archiveNum), logging_1.LogLevels.INFO);
+    return archiveNum;
+}
+/**
+ * Prunes the files in SharePoint so only the maximum given number exist.
+ * @param {number} maxFiles
+ * @param {SpoItem[]} currentFiles
+ * @param {string} accessToken
+ */
+function pruneFiles(maxFiles, currentFiles, accessToken) {
+    currentFiles.sort(function (a, b) { return Date.parse(a.createdDateTime) - Date.parse(b.createdDateTime); });
+    while (currentFiles.length > maxFiles) {
+        (0, logging_1.logTime)("Deleting file with ID ".concat(currentFiles[0].id, " and timestamp: ").concat(currentFiles[0].createdDateTime), logging_1.LogLevels.INFO);
+        var deleteUri = auth.apiConfig.uriBase + '/items/' + currentFiles[0].id;
+        (0, graph_1.deleteSpoContent)(deleteUri, accessToken);
+        currentFiles.shift();
+        (0, logging_1.logTime)("Current number of files in the directory: ".concat(currentFiles.length), logging_1.LogLevels.DEBUG);
+    }
+}
+/**
  * Main entrypoint into the solution.
  */
 function main() {
     return __awaiter(this, void 0, void 0, function () {
-        var directoryPath, zipPath, zipArr, zipName, zippy, authResponse, dirIdResp, dirId, uploadReqUri, uploadPayload, uploadUriResp, uploadUri, fileBuffer, content, _i, _a, item;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
+        var directoryPath, zipPath, zipArr, zipName, archiveNum, zippy, authResponse, dirIdResp, dirId, uploadReqUri, uploadPayload, uploadUriResp, uploadUri, fileBuffer, childUri, fileContent;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
                 case 0:
                     (0, logging_1.logTime)('Beginning a new run.', logging_1.LogLevels.INFO);
                     directoryPath = '/private/tmp/testing';
                     zipPath = "/private/tmp/".concat(getSolutionName(), "_").concat(formatDate(new Date()), ".zip");
                     zipArr = zipPath.split('/');
                     zipName = zipArr[zipArr.length - 1];
+                    archiveNum = getNumArchives();
                     validateEnv();
                     zippy = new zipController_1.ZipController(directoryPath, zipPath);
                     zippy.createZip();
                     (0, logging_1.logTime)('Attempting to get an access token from AAD.', logging_1.LogLevels.INFO);
                     return [4 /*yield*/, auth.getToken(auth.tokenRequest)];
                 case 1:
-                    authResponse = _b.sent();
+                    authResponse = _a.sent();
                     if (!authResponse) {
                         (0, logging_1.logTime)('Failed to receive any auth response.', logging_1.LogLevels.ERROR);
                         return [2 /*return*/];
@@ -162,11 +198,11 @@ function main() {
                     (0, logging_1.logTime)("Trying to get the directory ID from: ".concat(auth.apiConfig.uriDir), logging_1.LogLevels.INFO);
                     return [4 /*yield*/, (0, graph_1.getSpoContent)(auth.apiConfig.uriDir, authResponse.accessToken)];
                 case 2:
-                    dirIdResp = _b.sent();
+                    dirIdResp = _a.sent();
                     dirId = dirIdResp.id;
                     validateRespValue('directory id', dirId);
                     (0, logging_1.logTime)("Found directory ID value: ".concat(dirId), logging_1.LogLevels.DEBUG);
-                    uploadReqUri = auth.apiConfig.uriuploadBase +
+                    uploadReqUri = auth.apiConfig.uriBase +
                         '/items/' +
                         dirId +
                         ':/' +
@@ -178,11 +214,10 @@ function main() {
                         description: 'GitHub repository archive.',
                         fileSystemInfo: { 'odata.type': 'microsoft.graph.fileSystemInfo' },
                         name: zipName,
-                        //deferCommit: true,
                     };
                     return [4 /*yield*/, (0, graph_1.postSpoContent)(uploadReqUri, authResponse.accessToken, uploadPayload)];
                 case 3:
-                    uploadUriResp = _b.sent();
+                    uploadUriResp = _a.sent();
                     uploadUri = uploadUriResp.uploadUrl;
                     if (!uploadUri) {
                         throw new errors_1.MissingResponseValue('Failed to retrieve response for upload URI.');
@@ -193,15 +228,18 @@ function main() {
                     }
                     return [4 /*yield*/, (0, graph_1.uploadSpoContent)(uploadUri, authResponse.accessToken, fileBuffer)];
                 case 4:
-                    _b.sent();
+                    _a.sent();
                     (0, logging_1.logTime)("Getting content in directory from: ".concat(auth.apiConfig.uriChildren), logging_1.LogLevels.INFO);
-                    return [4 /*yield*/, (0, graph_1.getSpoContent)(auth.apiConfig.uriChildren, authResponse.accessToken)];
+                    childUri = auth.apiConfig.uriChildren + '?$select=id,name,createdDateTime,lastModifiedDateTime';
+                    return [4 /*yield*/, (0, graph_1.getSpoContent)(childUri, authResponse.accessToken)];
                 case 5:
-                    content = _b.sent();
-                    (0, logging_1.logTime)("Found ".concat(content.value.length, " items."), logging_1.LogLevels.DEBUG);
-                    for (_i = 0, _a = content.value; _i < _a.length; _i++) {
-                        item = _a[_i];
-                        (0, logging_1.logTime)("Response item: ".concat(item.name), logging_1.LogLevels.DEBUG);
+                    fileContent = _a.sent();
+                    if (fileContent.value.length > archiveNum) {
+                        (0, logging_1.logTime)("Found ".concat(fileContent.value.length, " archives. Removing ").concat(fileContent.value.length - archiveNum, " copies."), logging_1.LogLevels.INFO);
+                        pruneFiles(archiveNum, fileContent.value, authResponse.accessToken);
+                    }
+                    else {
+                        (0, logging_1.logTime)("Found only ".concat(fileContent.value.length, " archives. No need for removal."), logging_1.LogLevels.INFO);
                     }
                     zippy.removeArchive(zipPath);
                     return [2 /*return*/];

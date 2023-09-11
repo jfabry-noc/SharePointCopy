@@ -53,7 +53,7 @@ var ZipController = /** @class */ (function () {
         if (!filePath) {
             filePath = this.zipPath;
         }
-        (0, logging_1.logTime)("Checking if file '".concat(filePath, "' exists to be deleted."));
+        (0, logging_1.logTime)("Checking if local file '".concat(filePath, "' exists to be deleted."));
         if (fs.existsSync(filePath)) {
             (0, logging_1.logTime)("File '".concat(filePath, "' found."));
             try {

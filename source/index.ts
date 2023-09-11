@@ -1,11 +1,14 @@
 require('dotenv').config();
 
 import { BufferFailure, MissingResponseValue, MissingVariable } from './errors';
-import { getSpoContent, postSpoContent, uploadSpoContent } from './graph';
+import { deleteSpoContent, getSpoContent, postSpoContent, uploadSpoContent } from './graph';
+import { SpoItem } from './interfaces';
 import { logTime, LogLevels } from './logging';
 import { ZipController } from './zipController';
 
 import * as auth from './auth';
+
+const defaultArchiveCount = 4;
 
 /**
  * Validates the required environment variables are found.
@@ -89,6 +92,52 @@ function validateRespValue(valueName: string, value?: string) {
 }
 
 /**
+ * Determines the number of archives to keep. Defaults to 4.
+ * @returns {number}
+ */
+function getNumArchives(): number {
+    const archiveEnv = process.env.ARCHIVE_COUNT;
+    if(!archiveEnv) {
+        logTime(
+            `No archive count set. Using the default archive count of: ${defaultArchiveCount}`,
+            LogLevels.INFO
+        );
+        return defaultArchiveCount;
+    }
+    const archiveNum = parseInt(archiveEnv, 10);
+    if(!archiveNum || isNaN(archiveNum)) {
+        logTime(
+            `Invalid archive count specified: ${archiveEnv}. Using the default archive count of: ${defaultArchiveCount}`,
+            LogLevels.WARNING
+        );
+        return defaultArchiveCount;
+    }
+    logTime(`Using correctly specified archive count: ${archiveNum}`, LogLevels.INFO);
+    return archiveNum;
+}
+
+/**
+ * Prunes the files in SharePoint so only the maximum given number exist.
+ * @param {number} maxFiles
+ * @param {SpoItem[]} currentFiles
+ * @param {string} accessToken
+ */
+function pruneFiles(maxFiles: number, currentFiles: SpoItem[], accessToken: string) {
+    currentFiles.sort((a, b) => Date.parse(a.createdDateTime) - Date.parse(b.createdDateTime));
+
+    while(currentFiles.length > maxFiles) {
+        logTime(
+            `Deleting file with ID ${currentFiles[0].id} and timestamp: ${currentFiles[0].createdDateTime}`,
+            LogLevels.INFO
+        );
+        const deleteUri = auth.apiConfig.uriBase + '/items/' + currentFiles[0].id;
+        deleteSpoContent(deleteUri, accessToken);
+        currentFiles.shift();
+        logTime(`Current number of files in the directory: ${currentFiles.length}`, LogLevels.DEBUG);
+    }
+}
+
+/**
  * Main entrypoint into the solution.
  */
 async function main() {
@@ -97,6 +146,7 @@ async function main() {
     const zipPath: string = `/private/tmp/${getSolutionName()}_${formatDate(new Date())}.zip`;
     const zipArr: string[] = zipPath.split('/');
     const zipName: string = zipArr[zipArr.length -1];
+    const archiveNum = getNumArchives();
     validateEnv();
     const zippy: ZipController = new ZipController(directoryPath, zipPath);
     zippy.createZip();
@@ -125,7 +175,7 @@ async function main() {
     logTime(`Found directory ID value: ${dirId}`, LogLevels.DEBUG);
 
 
-    const uploadReqUri: string = auth.apiConfig.uriuploadBase +
+    const uploadReqUri: string = auth.apiConfig.uriBase +
                                 '/items/' +
                                 dirId +
                                 ':/' +
@@ -137,7 +187,6 @@ async function main() {
         description: 'GitHub repository archive.',
         fileSystemInfo: {'odata.type': 'microsoft.graph.fileSystemInfo'},
         name: zipName,
-        //deferCommit: true,
     };
     const uploadUriResp = await postSpoContent(uploadReqUri, authResponse.accessToken, uploadPayload);
     const uploadUri: string|undefined = uploadUriResp.uploadUrl;
@@ -155,10 +204,16 @@ async function main() {
         `Getting content in directory from: ${auth.apiConfig.uriChildren}`,
         LogLevels.INFO
     );
-    const content = await getSpoContent(auth.apiConfig.uriChildren, authResponse.accessToken);
-    logTime(`Found ${content.value.length} items.`, LogLevels.DEBUG);
-    for(const item of content.value) {
-        logTime(`Response item: ${item.name}`, LogLevels.DEBUG);
+    const childUri: string = auth.apiConfig.uriChildren + '?$select=id,name,createdDateTime,lastModifiedDateTime';
+    const fileContent = await getSpoContent(childUri, authResponse.accessToken);
+    if(fileContent.value.length > archiveNum) {
+        logTime(
+            `Found ${fileContent.value.length} archives. Removing ${fileContent.value.length - archiveNum} copy/copies.`,
+            LogLevels.INFO
+        );
+        pruneFiles(archiveNum, fileContent.value, authResponse.accessToken);
+    } else {
+        logTime(`Found only ${fileContent.value.length} archives. No need for removal.`, LogLevels.INFO);
     }
 
     zippy.removeArchive(zipPath);

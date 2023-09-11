@@ -34,7 +34,7 @@ export class ZipController {
         if(!filePath) {
             filePath = this.zipPath;
         }
-        logTime(`Checking if file '${filePath}' exists to be deleted.`);
+        logTime(`Checking if local file '${filePath}' exists to be deleted.`);
         if(fs.existsSync(filePath)) {
             logTime(`File '${filePath}' found.`);
             try {

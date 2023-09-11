@@ -1,8 +1,6 @@
 import axios, {AxiosError} from 'axios';
 import { logTime, LogLevels } from './logging';
 
-import { BufferConversionFailure } from './errors';
-
 /**
  * Gets content from a SharePoint Online directory.
  * @param {string} endpoint
@@ -38,18 +36,14 @@ export async function postSpoContent(endpoint: string, accessToken: string, body
         }
     };
 
-    try {
-        const response = await axios.post(endpoint, body, options);
-        return response.data;
-    } catch (error) {
-        logTime(`Failed to POST to endpoint with error: ${error}`, LogLevels.ERROR);
-    }
+    const response = await axios.post(endpoint, body, options);
+    return response.data;
 }
 
 export async function uploadSpoContent(endpoint: string, accessToken: string, data: Buffer) {
     logTime(`Making POST to: ${endpoint}`, LogLevels.INFO);
-    logTime(`Content length is: ${data.length}`, LogLevels.INFO);
-    logTime(`Using content range: bytes 0-${data.length - 1}/${data.length}`);
+    logTime(`Content length is: ${data.length}`, LogLevels.DEBUG);
+    logTime(`Using content range: bytes 0-${data.length - 1}/${data.length}`, LogLevels.DEBUG);
 
     const options = {
         maxBodyLength: Infinity,
@@ -63,16 +57,26 @@ export async function uploadSpoContent(endpoint: string, accessToken: string, da
         }
     };
 
-    try {
-        await axios.put(endpoint, data, options);
+    await axios.put(endpoint, data, options);
+}
+
+export async function deleteSpoContent(endpoint: string, accessToken: string) {
+    logTime(`Making DELETE to: ${endpoint}`, LogLevels.INFO);
+    const options = {
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+        }
+    };
+
+    // Catch this one to attempt to delete other files if needed.
+    try{
+        await axios.delete(endpoint, options);
     } catch (error) {
         if(error instanceof AxiosError) {
-            logTime(
-                `Failed to upload the file with error: ${error.code} - ${error.message}`,
-                LogLevels.ERROR
-            );
+            logTime(`Received error: ${error.code} - ${error.message}`, LogLevels.ERROR);
         } else {
-            logTime(`Failed to upload the file with error: ${error}`, LogLevels.ERROR);
+            logTime(`Received error: ${error}`, LogLevels.ERROR);
         }
     }
 }
