@@ -156,12 +156,13 @@ function pruneFiles(maxFiles: number, currentFiles: SpoItem[], accessToken: stri
 async function main() {
     logTime('Beginning a new run.', LogLevels.INFO);
     const directoryPath: string = core.getInput('directory_path');
-    const zipPath: string = `/private/tmp/${getSolutionName()}_${formatDate(new Date())}.zip`;
+    const zipPath: string = `/tmp/${getSolutionName()}_${formatDate(new Date())}.zip`;
     const zipArr: string[] = zipPath.split('/');
     const zipName: string = zipArr[zipArr.length -1];
     const archiveNum = getNumArchives();
     validateEnv();
     const zippy: ZipController = new ZipController(directoryPath, zipPath);
+    zippy.verifyDirectory('/tmp');
     zippy.createZip();
 
     logTime('Attempting to get an access token from AAD.', LogLevels.INFO);

@@ -31912,6 +31912,13 @@ class ZipController {
         logTime(`Reading file at: ${filePath}`, LogLevels.INFO);
         return external_fs_.readFileSync(filePath);
     }
+    verifyDirectory(dirPath) {
+        logTime(`Verifying the directory exists at: ${dirPath}`, LogLevels.INFO);
+        if (!external_fs_.existsSync(dirPath)) {
+            logTime('Directory does not exist. Creating it.', LogLevels.INFO);
+            external_fs_.mkdirSync(dirPath);
+        }
+    }
 }
 
 ;// CONCATENATED MODULE: ./node_modules/@azure/msal-node/dist/utils/Constants.mjs
@@ -44548,12 +44555,13 @@ function main() {
     return source_awaiter(this, void 0, void 0, function* () {
         logTime('Beginning a new run.', LogLevels.INFO);
         const directoryPath = core.getInput('directory_path');
-        const zipPath = `/private/tmp/${getSolutionName()}_${formatDate(new Date())}.zip`;
+        const zipPath = `/tmp/${getSolutionName()}_${formatDate(new Date())}.zip`;
         const zipArr = zipPath.split('/');
         const zipName = zipArr[zipArr.length - 1];
         const archiveNum = getNumArchives();
         validateEnv();
         const zippy = new ZipController(directoryPath, zipPath);
+        zippy.verifyDirectory('/tmp');
         zippy.createZip();
         logTime('Attempting to get an access token from AAD.', LogLevels.INFO);
         const authResponse = yield getToken(tokenRequest);

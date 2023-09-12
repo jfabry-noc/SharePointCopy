@@ -75,4 +75,12 @@ export class ZipController {
         logTime(`Reading file at: ${filePath}`, LogLevels.INFO);
         return fs.readFileSync(filePath);
     }
+
+    verifyDirectory(dirPath: string) {
+        logTime(`Verifying the directory exists at: ${dirPath}`, LogLevels.INFO);
+        if(!fs.existsSync(dirPath)) {
+            logTime('Directory does not exist. Creating it.', LogLevels.INFO);
+            fs.mkdirSync(dirPath);
+        }
+    }
 }

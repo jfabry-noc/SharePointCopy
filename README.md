@@ -35,3 +35,7 @@ The following inputs are required, though many have default values as specified 
 - `archive_count`: Number of total archives to keep in the directory. Defaults to `4`.
 - `directory_path`: Path to be zipped for the archive. Defaults to the current repository's workspace.
 - `logging`: Log level to output. Must be one of `DEBUG`, `INFO`, `WARNING`, or `ERROR`. Defaults to `INFO`.
+
+## Contributions
+
+The solution is written in TypeScript. [ncc](https://github.com/vercel/ncc) is used to compile it down to a single, self-contained file that can be cleanly used with GitHub Actions.
