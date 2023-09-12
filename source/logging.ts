@@ -1,5 +1,7 @@
 import * as path from 'path';
 
+import * as core from '@actions/core';
+
 export enum LogLevels {
     'DEBUG' = 'DEBUG',
     'INFO' = 'INFO',
@@ -24,7 +26,7 @@ function enumToInt(level?: LogLevels): number {
 }
 
 function envToLevel(): LogLevels {
-    let envLevel = process.env['LOGGING'];
+    let envLevel = core.getInput('logging');
     if(!envLevel) {
         envLevel = 'ERROR';
     }

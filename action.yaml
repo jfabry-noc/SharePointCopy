@@ -4,38 +4,42 @@ author: "John Fabry"
 branding:
   color: "purple"
 inputs:
-  spobkp_authority:
-    description: "O365 tenant authority"
+  tenant_id:
+    description: "Office 365 tenant"
     required: true
-  spobkp_endpoint:
-    description: "SharePoint endpoint to target for file upload"
+  aad_endpoint:
+    description: "URL to target as the Azure AD endpoint."
     required: true
-  spobkp_scope:
-    description: "Graph API scope."
+    default: "https://login.microsoftonline.com"
+  graph_endpoint:
+    description: "URL to target as the Graph API endpoint."
     required: true
-    default: "https://graph.microsoft.com/.default"
-  spobkp_clientid:
+    default: "https://graph.microsoft.com"
+  spo_path:
+    description: "API path and site collection ID."
+    required: true
+  client_id:
     description: "O365 Graph API client ID"
     required: true
-  spobkp_secret:
+  client_secret:
     description: "O365 Graph API client secret"
     required: true
-  archive_prefix:
+  base_name:
     description: "Prefix for the archive file"
     required: true
-    default: "spo_action"
-  debug:
-    description: "Whether or not to enable debug logging"
+    default: ${{ github.event.repository.name }}
+  archive_count:
+    description: "Number of archives to keep in SharePoint."
     required: true
-    default: "false"
+    default: "4"
+  directory_path:
+    description: "Path to archive."
+    required: true
+    default: ${{ github.workspace }}
+  logging:
+    description: "Log level to output. Must be one of DEBUG, INFO, WARNING, or ERROR."
+    required: true
+    default: "INFO"
 runs:
   using: "node20"
-  main: "index.js"
-  env:
-    SPOBKP_AUTHORITY: ${{ inputs.spobkp_authority }}
-    SPOBKP_ENDPOINT: ${{ inputs.spobkp_endpoint }}
-    SPOBKP_SCOPE: ${{ inputs.spobkp_scope }}
-    SPOBKP_CLIENTID: ${{ inputs.spobkp_clientid }}
-    SPOBKP_SECRET: ${{ inputs.spobkp_secret }}
-    DEBUG: ${{ inputs.debug }}
-    ARCHIVE_PREFIX: ${{ inputs.archive_prefix }}
+  main: "./dist/index.js"

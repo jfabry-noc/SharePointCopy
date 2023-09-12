@@ -4,6 +4,8 @@
         "outDir": "./build",
         "rootDir": "./source",
         "esModuleInterop": true,
-        "strict": true
+        "moduleResolution": "node",
+        "strict": true,
+        "target": "es2015"
     }
 }

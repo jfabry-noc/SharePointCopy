@@ -1,4 +1,6 @@
-require('dotenv').config();
+//require('dotenv').config();
+
+import * as core from '@actions/core';
 
 import { BufferFailure, MissingResponseValue, MissingVariable } from './errors';
 import { deleteSpoContent, getSpoContent, postSpoContent, uploadSpoContent } from './graph';
@@ -15,12 +17,16 @@ const defaultArchiveCount = 4;
  */
 function validateEnv() {
     const requiredVars: string[] = [
-        'TENANT_ID',
-        'CLIENT_ID',
-        'CLIENT_SECRET',
-        'AAD_ENDPOINT',
-        'GRAPH_ENDPOINT',
-        'SPO_PATH',
+        'tenant_id',
+        'client_id',
+        'client_secret',
+        'aad_endpoint',
+        'graph_endpoint',
+        'spo_path',
+        'base_name',
+        'archive_count',
+        'directory_path',
+        'logging',
     ]
 
     logTime(
@@ -29,7 +35,7 @@ function validateEnv() {
     );
 
     requiredVars.forEach((element) => {
-        if(!process.env[element]) {
+        if(!core.getInput(element)) {
             throw new MissingVariable(`Missing ${element} as an environment variable!`);
         }
     });
@@ -50,7 +56,7 @@ function padTwoDigits(num: number): string {
  * @returns {string}
  */
 function getSolutionName(): string {
-    let nameBase: string|undefined = process.env.BASE_NAME;
+    let nameBase: string|undefined = core.getInput('base_name');
     if(!nameBase) {
         nameBase = "sharepoint_action";
     }
@@ -96,7 +102,7 @@ function validateRespValue(valueName: string, value?: string) {
  * @returns {number}
  */
 function getNumArchives(): number {
-    const archiveEnv = process.env.ARCHIVE_COUNT;
+    const archiveEnv = core.getInput('archive_count');
     if(!archiveEnv) {
         logTime(
             `No archive count set. Using the default archive count of: ${defaultArchiveCount}`,
@@ -111,6 +117,13 @@ function getNumArchives(): number {
             LogLevels.WARNING
         );
         return defaultArchiveCount;
+    }
+
+    if(archiveNum < 1) {
+        logTime(
+            `Archive number must be at least 1, not ${archiveNum}. Using default value of: ${defaultArchiveCount}`,
+            LogLevels.WARNING
+        );
     }
     logTime(`Using correctly specified archive count: ${archiveNum}`, LogLevels.INFO);
     return archiveNum;
@@ -142,7 +155,7 @@ function pruneFiles(maxFiles: number, currentFiles: SpoItem[], accessToken: stri
  */
 async function main() {
     logTime('Beginning a new run.', LogLevels.INFO);
-    const directoryPath: string = '/private/tmp/testing';
+    const directoryPath: string = core.getInput('directory_path');
     const zipPath: string = `/private/tmp/${getSolutionName()}_${formatDate(new Date())}.zip`;
     const zipArr: string[] = zipPath.split('/');
     const zipName: string = zipArr[zipArr.length -1];

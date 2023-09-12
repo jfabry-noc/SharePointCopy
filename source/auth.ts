@@ -1,5 +1,6 @@
 // https://learn.microsoft.com/en-us/azure/active-directory/develop/tutorial-v2-nodejs-console
 import { MissingVariable } from "./errors";
+import * as core from '@actions/core';
 import * as msal from '@azure/msal-node';
 
 let clientId: string = '';
@@ -13,35 +14,35 @@ function throwMissingVar(varName: string) {
     throw new MissingVariable(`Missing environment variable for: ${varName}`);
 }
 
-if(process.env.CLIENT_ID) {
-    clientId = process.env.CLIENT_ID;
+if(core.getInput('client_id')) {
+    clientId = core.getInput('client_id');
 } else {
-    throwMissingVar('CLIENT_ID');
+    throwMissingVar('client_id');
 }
-if(process.env.AAD_ENDPOINT) {
-    aadEndpoint = process.env.AAD_ENDPOINT;
+if(core.getInput('aad_endpoint')) {
+    aadEndpoint = core.getInput('aad_endpoint');
 } else {
-    throwMissingVar('AAD_ENDPOINT');
+    throwMissingVar('aad_endpoint');
 }
-if(process.env.TENANT_ID) {
-    tenantId = process.env.TENANT_ID;
+if(core.getInput('tenant_id')) {
+    tenantId = core.getInput('tenant_id');
 } else {
-    throwMissingVar('TENANT_ID');
+    throwMissingVar('tenant_id');
 }
-if(process.env.CLIENT_SECRET) {
-    clientSecret = process.env.CLIENT_SECRET;
+if(core.getInput('client_secret')) {
+    clientSecret = core.getInput('client_secret');
 } else {
-    throwMissingVar('CLIENT_SECRET');
+    throwMissingVar('client_secret');
 }
-if(process.env.GRAPH_ENDPOINT) {
-    graphEndpoint = process.env.GRAPH_ENDPOINT;
+if(core.getInput('graph_endpoint')) {
+    graphEndpoint = core.getInput('graph_endpoint');
 } else {
-    throwMissingVar('GRAPH_ENDPOINT');
+    throwMissingVar('graph_endpoint');
 }
-if(process.env.SPO_PATH) {
-    spoPath = process.env.SPO_PATH;
+if(core.getInput('spo_path')) {
+    spoPath = core.getInput('spo_path');
 } else {
-    throwMissingVar('SPO_PATH');
+    throwMissingVar('spo_path');
 }
 
 const msalConfig = {
