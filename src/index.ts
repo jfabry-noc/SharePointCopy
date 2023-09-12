@@ -1,5 +1,3 @@
-//require('dotenv').config();
-
 import * as core from '@actions/core';
 
 import { BufferFailure, MissingResponseValue, MissingVariable } from './errors';
@@ -173,10 +171,7 @@ async function main() {
         );
         return;
     }
-    logTime(
-        `Received authentication token: ${authResponse.accessToken}`,
-        LogLevels.INFO
-    );
+    logTime(`Successfully received authentication token.`, LogLevels.INFO);
     validateRespValue('access token', authResponse.accessToken);
 
     logTime(

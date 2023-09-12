@@ -8,7 +8,7 @@ import { logTime, LogLevels } from './logging';
  * @returns {object}
  */
 export async function getSpoContent(endpoint: string, accessToken: string): Promise<any> {
-    logTime(`Making a GET to: ${endpoint}`, LogLevels.INFO);
+    logTime(`Making a GET to: ${endpoint}`, LogLevels.DEBUG);
 
     const options = {
         headers: {
@@ -27,7 +27,7 @@ export async function getSpoContent(endpoint: string, accessToken: string): Prom
 }
 
 export async function postSpoContent(endpoint: string, accessToken: string, body: object): Promise<any> {
-    logTime(`Making a POST to: ${endpoint}`, LogLevels.INFO);
+    logTime(`Making a POST to: ${endpoint}`, LogLevels.DEBUG);
 
     const options = {
         headers: {
@@ -41,7 +41,7 @@ export async function postSpoContent(endpoint: string, accessToken: string, body
 }
 
 export async function uploadSpoContent(endpoint: string, accessToken: string, data: Buffer) {
-    logTime(`Making POST to: ${endpoint}`, LogLevels.INFO);
+    logTime(`Making POST to: ${endpoint}`, LogLevels.DEBUG);
     logTime(`Content length is: ${data.length}`, LogLevels.DEBUG);
     logTime(`Using content range: bytes 0-${data.length - 1}/${data.length}`, LogLevels.DEBUG);
 
@@ -61,7 +61,7 @@ export async function uploadSpoContent(endpoint: string, accessToken: string, da
 }
 
 export async function deleteSpoContent(endpoint: string, accessToken: string) {
-    logTime(`Making DELETE to: ${endpoint}`, LogLevels.INFO);
+    logTime(`Making DELETE to: ${endpoint}`, LogLevels.DEBUG);
     const options = {
         headers: {
             Authorization: `Bearer ${accessToken}`,

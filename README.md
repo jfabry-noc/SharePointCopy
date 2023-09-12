@@ -38,4 +38,8 @@ The following inputs are required, though many have default values as specified 
 
 ## Contributions
 
-The solution is written in TypeScript. [ncc](https://github.com/vercel/ncc) is used to compile it down to a single, self-contained file that can be cleanly used with GitHub Actions.
+The solution is written in TypeScript. [ncc](https://github.com/vercel/ncc) is used to compile it down to a single, self-contained file that can be cleanly used with GitHub Actions. E.g.:
+
+```shell
+ncc build src/index.ts -o dist
+```
